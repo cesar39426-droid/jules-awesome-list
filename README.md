@@ -12,9 +12,23 @@
 
 ---
 
+## Introduction
+
+Welcome to the Awesome Jules Prompts repository! This is a community-curated collection of effective prompts for **Jules**, an AI coding agent from Google Labs designed to help with a wide range of software development tasks.
+
+The goal of this project is to provide a shared resource for developers to discover, use, and contribute prompts that make working with Jules faster, easier, and more effective.
+
+## How to Use
+
+The prompts in this list are designed to be copied and pasted directly into your interactions with Jules. They are formatted as comments (`//`) to clearly separate the instruction from your own code or context.
+
+Simply find a task you need help with, adapt the placeholder text (like `{a specific file}`), and let Jules handle the rest.
+
 ## Table of Contents
 
 - [Table of Contents](#table-of-contents)
+- [Introduction](#introduction)
+- [How to Use](#how-to-use)
 - [Everyday Dev Tasks](#everyday-dev-tasks)
 - [Debugging](#debugging)
 - [Documentation](#documentation)
@@ -29,6 +43,8 @@
 ---
 
 ## Everyday Dev Tasks
+
+*Prompts for common, language-agnostic coding tasks.*
 
 - `// Refactor {a specific} file from {x} to {y}...`
   <sub>General-purpose, applies to any language or repo.</sub>
@@ -55,6 +71,8 @@
 
 ## Debugging
 
+*Prompts for identifying and resolving bugs, errors, and performance issues.*
+
 - `// Help me fix {a specific} error...`
   <sub>For any repo where you're stuck on a runtime or build error.</sub>
 
@@ -79,6 +97,8 @@
 
 ## Documentation
 
+*Prompts for generating, updating, and improving documentation.*
+
 - `// Write a README for this project`
   <sub>Any repo lacking a basic project overview.</sub>
 
@@ -94,6 +114,8 @@
 
 
 ## Testing
+
+*Prompts for creating and managing tests and test suites.*
 
 - `// Add integration tests for this API endpoint`
   <sub>Express, FastAPI, Django, Flask apps.</sub>
@@ -120,6 +142,8 @@
 
 ## Package Management
 
+*Prompts for managing dependencies, packages, and configurations.*
+
 - `// Upgrade my linter and autofix breaking config changes`
   <sub>JS/TS repos using ESLint or Prettier.</sub>
 
@@ -138,6 +162,8 @@
 
 
 ## AI-Native Tasks
+
+*Prompts for tasks that leverage AI's unique analytical and generative capabilities.*
 
 - `// Analyze this repo and generate 3 feature ideas`
   <sub>Vision-stage or greenfield products.</sub>
@@ -164,6 +190,8 @@
 
 ## Context
 
+*Prompts for summarizing changes and understanding repository history.*
+
 - `// Write a status update based on recent commits`
   <sub>Managerial and async communication.</sub>
 
@@ -173,6 +201,8 @@
 
 
 ## Fun & Experimental
+
+*Prompts for creative, exploratory, and non-critical tasks.*
 
 - `// Add a confetti animation when {a specific} action succeeds`
   <sub>Frontend web apps with user delight moments.</sub>
@@ -190,6 +220,8 @@
   <sub>Reusable, platform-integrated tools.</sub>
 
 ## Start from Scratch
+
+*Prompts for bootstrapping new projects, features, or learning about a codebase.*
 
 - `// What's going on in this repo?`
   <sub>Great for legacy repos or onboarding onto unfamiliar code.</sub>

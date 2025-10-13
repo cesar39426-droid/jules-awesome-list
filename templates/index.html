@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Autolavado</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="container">
+        <h1>Sistema de Gestión de Autolavado</h1>
+
+        <form action="/" method="post" class="order-form">
+            <div class="form-group">
+                <label for="patente">Patente del Vehículo</label>
+                <input type="text" id="patente" name="patente" placeholder="Ej: B-2024-XYZ" required>
+            </div>
+
+            <div class="form-group">
+                <label>Servicios Disponibles</label>
+                <div class="services-grid">
+                    {% for service in all_services %}
+                    <div class="service-item">
+                        <input type="checkbox" id="service-{{ loop.index }}" name="servicios" value="{{ service }}">
+                        <label for="service-{{ loop.index }}">{{ service }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn">Generar Orden</button>
+        </form>
+
+        {% if resultado %}
+        <div class="result-container">
+            {% if resultado.error %}
+            <div class="card error-card">
+                <h2>Error</h2>
+                <p>{{ resultado.error }}</p>
+            </div>
+            {% elif resultado.orden %}
+            <div class="card order-card">
+                <h2>Orden Generada Exitosamente</h2>
+                <p><strong>ID de Orden:</strong> {{ resultado.orden.id_orden }}</p>
+                <p><strong>Estado:</strong> <span class="status-waiting">{{ resultado.orden.estado }}</span></p>
+
+                <div class="customer-info">
+                    <p><strong>Cliente:</strong> {{ resultado.orden.cliente.nombre }}</p>
+                    <p><strong>Vehículo:</strong> {{ resultado.orden.cliente.vehiculo }} ({{ resultado.orden.cliente.patente }})</p>
+                </div>
+
+                <h3>Servicios Confirmados</h3>
+                <ul>
+                    {% for service in resultado.orden.servicios_confirmados %}
+                    <li>{{ service.servicio }} - <span>{{ service.precio }}</span></li>
+                    {% else %}
+                    <li>No se confirmaron servicios.</li>
+                    {% endfor %}
+                </ul>
+
+                {% if resultado.orden.servicios_no_disponibles %}
+                <h3 class="warning-title">Servicios No Disponibles</h3>
+                <ul class="warning-list">
+                    {% for service in resultado.orden.servicios_no_disponibles %}
+                    <li>{{ service }} (No disponible para {{ resultado.orden.cliente.vehiculo }})</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+
+                <div class="total-section">
+                    <h3>Total a Pagar: <span>{{ resultado.orden.total_a_pagar }}</span></h3>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+    </div>
+
+</body>
+</html>

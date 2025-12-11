@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INNOVA24 - Gestión y Presupuestos</title>
+
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Configuración de Colores Bitrix24 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        bitrixBlue: '#00AEEF',
+                        bitrixDark: '#262626',
+                        bitrixGray: '#525C69',
+                        bitrixLight: '#F5F7F8'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap');
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: #eef2f4;
+        }
+
+        /* Estilos específicos para impresión (Generación de PDF) */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            .print-only {
+                display: block !important;
+            }
+            body {
+                background-color: white;
+            }
+            .page-break {
+                page-break-before: always;
+            }
+            .shadow-xl {
+                box-shadow: none !important;
+            }
+            .border {
+                border: none !important;
+            }
+            .container-doc {
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // Datos extraídos del PDF
+        const companyData = {
+            name: "INNOVA24",
+            slogan: "Tecnología que simplifica la gestión",
+            phone: "+54 9 3487 704362",
+            email: "info@innova24.com.ar",
+            web: "www.innova24.com.ar",
+            linkedin: "www.linkedin.com/company/innova24",
+            location: "Buenos Aires - Argentina | Proyección Virtual Nacional",
+            about: "Somos una empresa familiar argentina que acompaña a profesionales, PyMEs y organizaciones a ordenar, conectar y escalar su gestión con Bitrix24, el sistema colaborativo líder a nivel mundial.",
+            method: "Integramos tecnología, método y acompañamiento humano para lograr orden, eficiencia y resultados medibles."
+        };
+
+        const defaultServices = [
+            { id: 1, title: "Implementación Bitrix24 (Cloud/On-Premise)", desc: "Configuración integral del entorno, diseño e identidad propia.", price: 0, selected: false },
+            { id: 2, title: "Automatización de Procesos", desc: "Creación de flujos inteligentes para eliminar tareas repetitivas.", price: 0, selected: false },
+            { id: 3, title: "CRM Comercial y Gestión de Clientes", desc: "Embudos de venta, reportes y alertas en tiempo real.", price: 0, selected: false },
+            { id: 4, title: "Comunicación Interna y Colaboración", desc: "Chats, tareas, videollamadas y espacios de equipo.", price: 0, selected: false },
+            { id: 5, title: "Capacitación y Soporte Continuo", desc: "Entrenamiento práctico, manuales y asistencia permanente.", price: 0, selected: false },
+            { id: 6, title: "Analítica y Control de Gestión", desc: "Tableros de control e indicadores (KPI) para medir resultados.", price: 0, selected: false },
+        ];
+
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('carta'); // carta | presupuesto
+            const [logo, setLogo] = useState("{{ url_for('static', filename='img/logo-Innova24-Alta-01.jpg') }}");
+            const [clientName, setClientName] = useState('');
+            const [budgetDate, setBudgetDate] = useState(new Date().toISOString().slice(0, 10));
+            const [services, setServices] = useState(defaultServices);
+            const [showConfig, setShowConfig] = useState(true);
+
+            // Manejo de carga de logo
+            const handleLogoUpload = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        setLogo(reader.result);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            // Manejo de servicios en el presupuesto
+            const toggleService = (id) => {
+                setServices(services.map(s => s.id === id ? { ...s, selected: !s.selected } : s));
+            };
+
+            const updatePrice = (id, newPrice) => {
+                setServices(services.map(s => s.id === id ? { ...s, price: parseFloat(newPrice) || 0 } : s));
+            };
+
+            const calculateTotal = () => {
+                return services.filter(s => s.selected).reduce((acc, curr) => acc + curr.price, 0);
+            };
+
+            const handlePrint = () => {
+                window.print();
+            };
+
+            return (
+                <div className="min-h-screen flex flex-col md:flex-row">
+
+                    {/* Sidebar de Control (No sale en impresión) */}
+                    <div className="no-print w-full md:w-80 bg-bitrixDark text-white p-6 flex-shrink-0 overflow-y-auto">
+                        <h2 className="text-2xl font-bold mb-6 text-bitrixBlue flex items-center gap-2">
+                            <i className="fa-solid fa-rocket"></i> INNOVA24
+                        </h2>
+
+                        <div className="space-y-6">
+                            {/* Logo Upload */}
+                            <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                                <label className="block text-sm font-semibold mb-2 text-gray-300">Tu Logo</label>
+                                <input type="file" accept="image/*" onChange={handleLogoUpload} className="w-full text-xs text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-bitrixBlue file:text-white hover:file:bg-blue-600"/>
+                                {logo && <img src={logo} alt="Preview" className="mt-3 h-12 object-contain bg-white p-1 rounded" />}
+                            </div>
+
+                            {/* Navegación */}
+                            <div className="flex flex-col gap-2">
+                                <button
+                                    onClick={() => setActiveTab('carta')}
+                                    className={`p-3 rounded-lg text-left transition-all ${activeTab === 'carta' ? 'bg-bitrixBlue text-white font-bold shadow-lg' : 'hover:bg-gray-700 text-gray-300'}`}
+                                >
+                                    <i className="fa-solid fa-file-invoice mr-2"></i> Carta de Presentación
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('presupuesto')}
+                                    className={`p-3 rounded-lg text-left transition-all ${activeTab === 'presupuesto' ? 'bg-bitrixBlue text-white font-bold shadow-lg' : 'hover:bg-gray-700 text-gray-300'}`}
+                                >
+                                    <i className="fa-solid fa-calculator mr-2"></i> Nuevo Presupuesto
+                                </button>
+                            </div>
+
+                            {/* Configuración Presupuesto */}
+                            {activeTab === 'presupuesto' && (
+                                <div className="bg-gray-800 p-4 rounded-lg border border-gray-700 space-y-3 animate-fade-in">
+                                    <h3 className="text-bitrixBlue font-bold border-b border-gray-700 pb-2">Datos del Cliente</h3>
+                                    <div>
+                                        <label className="text-xs text-gray-400">Cliente / Empresa</label>
+                                        <input
+                                            type="text"
+                                            value={clientName}
+                                            onChange={(e) => setClientName(e.target.value)}
+                                            className="w-full bg-gray-900 border border-gray-600 rounded p-2 text-sm text-white focus:border-bitrixBlue outline-none"
+                                            placeholder="Nombre del cliente"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-gray-400">Fecha</label>
+                                        <input
+                                            type="date"
+                                            value={budgetDate}
+                                            onChange={(e) => setBudgetDate(e.target.value)}
+                                            className="w-full bg-gray-900 border border-gray-600 rounded p-2 text-sm text-white focus:border-bitrixBlue outline-none"
+                                        />
+                                    </div>
+
+                                    <h3 className="text-bitrixBlue font-bold border-b border-gray-700 pb-2 pt-2">Servicios a Incluir</h3>
+                                    <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                                        {services.map(service => (
+                                            <div key={service.id} className="bg-gray-900 p-2 rounded border border-gray-700">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={service.selected}
+                                                        onChange={() => toggleService(service.id)}
+                                                        className="w-4 h-4 text-bitrixBlue rounded focus:ring-bitrixBlue"
+                                                    />
+                                                    <span className="text-xs font-medium leading-tight">{service.title}</span>
+                                                </div>
+                                                {service.selected && (
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs text-gray-400">$</span>
+                                                        <input
+                                                            type="number"
+                                                            value={service.price}
+                                                            onChange={(e) => updatePrice(service.id, e.target.value)}
+                                                            className="w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-xs text-white"
+                                                            placeholder="Precio"
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="pt-2 border-t border-gray-600 flex justify-between items-center font-bold text-lg">
+                                        <span>Total:</span>
+                                        <span className="text-green-400">${calculateTotal().toLocaleString()}</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            <button
+                                onClick={handlePrint}
+                                className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg shadow transition-colors mt-auto flex justify-center items-center gap-2"
+                            >
+                                <i className="fa-solid fa-print"></i> Imprimir / Guardar PDF
+                            </button>
+                            <p className="text-xs text-gray-500 text-center mt-2">
+                                Tip: En móvil, usa "Compartir" -> "Imprimir".
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Área de Visualización (Documento) */}
+                    <div className="flex-1 bg-gray-200 p-4 md:p-8 overflow-y-auto">
+                        <div className="container-doc bg-white shadow-xl mx-auto max-w-4xl min-h-[1100px] p-8 md:p-12 relative">
+
+                            {/* Header del Documento */}
+                            <header className="flex justify-between items-start border-b-4 border-bitrixBlue pb-6 mb-8">
+                                <div className="w-48">
+                                    {logo ? (
+                                        <img src={logo} alt="Logo Empresa" className="max-w-full max-h-24 object-contain" />
+                                    ) : (
+                                        <div className="h-20 w-40 bg-gray-100 flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-300 rounded">
+                                            <span className="text-xs text-center">Sube tu logo<br/>en el menú</span>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="text-right text-bitrixGray text-sm">
+                                    <h1 className="text-2xl font-bold text-bitrixDark tracking-tight">{companyData.name}</h1>
+                                    <p className="text-bitrixBlue font-semibold mb-2">{companyData.slogan}</p>
+                                    <p><i className="fa-solid fa-phone text-xs mr-2"></i>{companyData.phone}</p>
+                                    <p><i className="fa-solid fa-envelope text-xs mr-2"></i>{companyData.email}</p>
+                                    <p><i className="fa-solid fa-globe text-xs mr-2"></i>{companyData.web}</p>
+                                </div>
+                            </header>
+
+                            {/* CONTENIDO: CARTA DE PRESENTACIÓN */}
+                            {activeTab === 'carta' && (
+                                <div className="animate-fade-in text-gray-700 leading-relaxed">
+                                    <div className="bg-blue-50 border-l-4 border-bitrixBlue p-6 mb-8">
+                                        <h2 className="text-xl font-bold text-bitrixDark mb-2">INNOVA24. TECNOLOGÍA QUE SIMPLIFICA LA GESTIÓN</h2>
+                                        <p className="italic text-gray-600">"{companyData.name} nace con una idea poderosa: hacer que la tecnología trabaje para las personas."</p>
+                                    </div>
+
+                                    <div className="mb-8">
+                                        <p className="mb-4">
+                                            {companyData.about}
+                                        </p>
+                                        <p className="mb-4">
+                                            {companyData.method}
+                                        </p>
+                                    </div>
+
+                                    <div className="grid md:grid-cols-2 gap-6 mb-10">
+                                        <div className="bg-gray-50 p-4 rounded-lg">
+                                            <h3 className="font-bold text-bitrixBlue mb-2"><i className="fa-solid fa-check-circle mr-2"></i>Qué nos diferencia</h3>
+                                            <p className="text-sm">Unimos tecnología global con implementación personalizada, capacitación práctica y soporte continuo, adaptado a cada empresa.</p>
+                                        </div>
+                                        <div className="bg-gray-50 p-4 rounded-lg">
+                                            <h3 className="font-bold text-bitrixBlue mb-2"><i className="fa-solid fa-chart-line mr-2"></i>Qué logra el cliente</h3>
+                                            <p className="text-sm">Trabajar con orden, control y productividad, reducir tareas repetitivas y tomar decisiones basadas en datos reales.</p>
+                                        </div>
+                                    </div>
+
+                                    <h3 className="text-lg font-bold text-bitrixDark border-b border-gray-200 pb-2 mb-4">NUESTROS SERVICIOS</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8 mb-8">
+                                        {services.map((service) => (
+                                            <div key={service.id}>
+                                                <h4 className="font-bold text-gray-800 text-sm">{service.title}</h4>
+                                                <p className="text-xs text-gray-500 mt-1">{service.desc}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="text-center mt-12 pt-8 border-t border-gray-100">
+                                        <p className="font-bold text-bitrixDark text-lg mb-1">{companyData.name}</p>
+                                        <p className="text-gray-500 text-sm">Tecnología inteligente para empresas que quieren crecer con método y resultados reales.</p>
+                                        <p className="text-bitrixBlue font-bold text-sm mt-2">Partner Oficial de Bitrix24</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* CONTENIDO: PRESUPUESTO */}
+                            {activeTab === 'presupuesto' && (
+                                <div className="animate-fade-in">
+                                    <div className="flex justify-between items-end mb-8 border-b border-gray-300 pb-4">
+                                        <div>
+                                            <p className="text-sm text-gray-500 uppercase tracking-wide">Presupuesto para:</p>
+                                            <h2 className="text-3xl font-bold text-bitrixDark">{clientName || "Nombre del Cliente"}</h2>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-sm text-gray-500 uppercase tracking-wide">Fecha:</p>
+                                            <p className="font-semibold">{new Date(budgetDate).toLocaleDateString()}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="mb-8">
+                                        <p className="text-gray-600 mb-4">
+                                            Estimado cliente, <br/><br/>
+                                            De acuerdo a nuestro relevamiento, presentamos la siguiente propuesta de implementación y servicios Bitrix24 para potenciar la gestión de su organización.
+                                        </p>
+                                    </div>
+
+                                    <table className="w-full mb-8 border-collapse">
+                                        <thead>
+                                            <tr className="bg-bitrixBlue text-white">
+                                                <th className="py-3 px-4 text-left rounded-tl-lg">Servicio / Descripción</th>
+                                                <th className="py-3 px-4 text-right rounded-tr-lg w-32">Inversión</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {services.filter(s => s.selected).length > 0 ? (
+                                                services.filter(s => s.selected).map((service) => (
+                                                    <tr key={service.id} className="border-b border-gray-200 hover:bg-gray-50">
+                                                        <td className="py-4 px-4">
+                                                            <p className="font-bold text-gray-800">{service.title}</p>
+                                                            <p className="text-sm text-gray-500 mt-1">{service.desc}</p>
+                                                        </td>
+                                                        <td className="py-4 px-4 text-right font-semibold text-gray-700">
+                                                            ${service.price.toLocaleString()}
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            ) : (
+                                                <tr>
+                                                    <td colSpan="2" className="py-8 text-center text-gray-400 italic">
+                                                        Seleccione servicios en el panel lateral para agregarlos al presupuesto.
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                        <tfoot>
+                                            <tr className="bg-gray-50">
+                                                <td className="py-4 px-4 text-right font-bold text-gray-600">TOTAL</td>
+                                                <td className="py-4 px-4 text-right font-bold text-2xl text-bitrixBlue">
+                                                    ${calculateTotal().toLocaleString()}
+                                                </td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+
+                                    <div className="bg-blue-50 p-6 rounded-lg mb-8 text-sm text-gray-700">
+                                        <h4 className="font-bold text-bitrixBlue mb-2">Condiciones Generales</h4>
+                                        <ul className="list-disc pl-5 space-y-1">
+                                            <li>La presente oferta tiene una validez de 15 días.</li>
+                                            <li>Los valores no incluyen IVA.</li>
+                                            <li>Forma de pago: 50% al inicio y 50% contra entrega.</li>
+                                            <li>Los tiempos de implementación dependerán de la disponibilidad de información por parte del cliente.</li>
+                                        </ul>
+                                    </div>
+
+                                    <div className="mt-12 text-center">
+                                         <p className="text-gray-600 mb-6">Quedamos a disposición para avanzar con la transformación digital de su empresa.</p>
+                                         <div className="inline-block border-t border-gray-300 pt-2 px-8">
+                                            <p className="font-bold text-bitrixDark">INNOVA24</p>
+                                            <p className="text-xs text-gray-500">Dirección Comercial</p>
+                                            <p className="text-xs text-bitrixBlue font-semibold mt-1">Official Partner of Bitrix24</p>
+                                         </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Footer del Documento */}
+                            <footer className="mt-auto pt-8 border-t-2 border-gray-100 flex flex-col md:flex-row justify-between items-center text-xs text-gray-400 gap-4">
+                                <div className="text-center md:text-left">
+                                    <p className="font-bold text-bitrixGray">{companyData.location}</p>
+                                    <p>LinkedIn: in/innova24 | Official Partner of Bitrix24</p>
+                                </div>
+                                <div className="flex gap-4">
+                                    <span className="flex items-center gap-1"><i className="fa-brands fa-whatsapp"></i> +54 9 3487 704362</span>
+                                    <span className="flex items-center gap-1"><i className="fa-solid fa-globe"></i> innova24.com.ar</span>
+                                </div>
+                            </footer>
+
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
